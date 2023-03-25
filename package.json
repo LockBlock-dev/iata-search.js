@@ -28,6 +28,8 @@
     },
     "homepage": "https://github.com/LockBlock-dev/iata-search.js#readme",
     "keywords": [
-        "iata"
+        "iata",
+        "iata-codes",
+        "headless"
     ]
 }
