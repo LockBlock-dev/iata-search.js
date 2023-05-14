@@ -8,10 +8,12 @@
     * [.FILTERS](#Client+FILTERS) : <code>Object</code>
     * [.BASE_URL](#Client+BASE_URL) : <code>String</code>
     * [.SEARCH_PORTAL_URL](#Client+SEARCH_PORTAL_URL) : <code>String</code>
-    * [.AIRLINE_CODES_URL](#Client+AIRLINE_CODES_URL) : <code>String</code>
     * [.AIRPORT_CODES_URL](#Client+AIRPORT_CODES_URL) : <code>String</code>
+    * [.MEMBERS_PORTAL_URL](#Client+MEMBERS_PORTAL_URL) : <code>String</code>
+    * [.AIRLINE_CODES_URL](#Client+AIRLINE_CODES_URL) : <code>String</code>
     * [.airport(search)](#Client+airport) ⇒ <code>Promise.&lt;Object&gt;</code>
     * [.airline([search], [regionFilters])](#Client+airline) ⇒ <code>Promise.&lt;Object&gt;</code>
+    * [.airlines([regionFilters])](#Client+airlines) ⇒ <code>Promise.&lt;Object&gt;</code>
 
 <a name="new_Client_new"></a>
 
@@ -47,16 +49,22 @@ The base URL for IATA website
 The URL for the search portal
 
 **Kind**: instance property of [<code>Client</code>](#Client)  
-<a name="Client+AIRLINE_CODES_URL"></a>
-
-### client.AIRLINE\_CODES\_URL : <code>String</code>
-The base URL for airline codes search
-
-**Kind**: instance property of [<code>Client</code>](#Client)  
 <a name="Client+AIRPORT_CODES_URL"></a>
 
 ### client.AIRPORT\_CODES\_URL : <code>String</code>
 The base URL for airport codes search
+
+**Kind**: instance property of [<code>Client</code>](#Client)  
+<a name="Client+MEMBERS_PORTAL_URL"></a>
+
+### client.MEMBERS\_PORTAL\_URL : <code>String</code>
+The base URL for the members portal
+
+**Kind**: instance property of [<code>Client</code>](#Client)  
+<a name="Client+AIRLINE_CODES_URL"></a>
+
+### client.AIRLINE\_CODES\_URL : <code>String</code>
+The base URL for airline codes search
 
 **Kind**: instance property of [<code>Client</code>](#Client)  
 <a name="Client+airport"></a>
@@ -101,4 +109,19 @@ client.airline("074")
 **Example**  
 ```js
 client.airline("", [client.FILTERS.EUROPE, client.FILTERS.THE_AMERICAS])
+```
+<a name="Client+airlines"></a>
+
+### client.airlines([regionFilters]) ⇒ <code>Promise.&lt;Object&gt;</code>
+Airlines list. (Can be slow)
+
+**Kind**: instance method of [<code>Client</code>](#Client)  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| [regionFilters] | <code>Array</code> | <code>[]</code> | filters for the search |
+
+**Example**  
+```js
+client.airlines([client.FILTERS.EUROPE, client.FILTERS.THE_AMERICAS])
 ```

@@ -44,16 +44,22 @@ class Client {
     SEARCH_PORTAL_URL = `${this.BASE_URL}/en/publications/directories/code-search`;
 
     /**
-     * The base URL for airline codes search
-     * @type {String}
-     */
-    AIRLINE_CODES_URL = `${this.BASE_URL}/en/about/members/airline-list`;
-
-    /**
      * The base URL for airport codes search
      * @type {String}
      */
     AIRPORT_CODES_URL = `${this.BASE_URL}/AirportCodesSearch/Search`;
+
+    /**
+     * The base URL for the members portal
+     * @type {String}
+     */
+    MEMBERS_PORTAL_URL = `${this.BASE_URL}/en/about/members/airline-list`;
+
+    /**
+     * The base URL for airline codes search
+     * @type {String}
+     */
+    AIRLINE_CODES_URL = `${this.BASE_URL}/AirlineMembersSearchBlock/Search`;
 
     #headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/109.0",
@@ -213,7 +219,7 @@ class Client {
 
         regionFilters.forEach((r) => params.append("region", r));
 
-        const additional = await this.#getAdditionalData("airline", this.AIRLINE_CODES_URL);
+        const additional = await this.#getAdditionalData("airline", this.MEMBERS_PORTAL_URL);
 
         if (additional.ok) {
             for (const [key, val] of additional.data.entries()) {
@@ -265,6 +271,96 @@ class Client {
                     err: "Invalid response from IATA website!",
                 };
             }
+        } else {
+            return {
+                ok: false,
+                err: "Invalid form data from IATA website!",
+            };
+        }
+    }
+
+    /**
+     * Airlines list. (Can be slow)
+     * @param {Array} [regionFilters = []] filters for the search
+     * @example client.airlines([client.FILTERS.EUROPE, client.FILTERS.THE_AMERICAS])
+     * @return {Promise<Object>}
+     */
+    async airlines(regionFilters = []) {
+        const additional = await this.#getAdditionalData("airline", this.MEMBERS_PORTAL_URL);
+
+        if (additional.ok) {
+            let max = 1;
+            let data = [];
+
+            for (let i = 0; i < max; i++) {
+                const url = new URL(this.AIRLINE_CODES_URL);
+                const params = new URLSearchParams({
+                    page: i + 1,
+                    ordering: "Alphabetical",
+                });
+
+                regionFilters.forEach((r) => params.append("region", r));
+
+                for (const [key, val] of additional.data.entries()) {
+                    params.append(key, val);
+                }
+
+                const res = await this.#request({
+                    method: "GET",
+                    url: url,
+                    params: params,
+                });
+
+                if (res) {
+                    const $ = cheerio.load(res);
+
+                    /* Panel results headers */
+                    // const headers = $("table.datatable thead > tr")
+                    //     .children("td")
+                    //     .map((idx, el) => {
+                    //         console.log($(el).html());
+                    //         return `${$(el).text()[0].toUpperCase()}${$(el).text().substring(1)}`;
+                    //     })
+                    //     .get();
+
+                    /* Custom headers */
+                    const headers = ["airline", "iataCode", "airlineCode", "icaoCode", "country"];
+
+                    data = data.concat(
+                        $("table.datatable tbody")
+                            .children("tr")
+                            .map((idx, elem) => {
+                                const obj = {};
+                                $(elem)
+                                    .children("td")
+                                    .map((idx, el) => {
+                                        // Prevents unwanted fields to be added
+                                        if (headers[idx]) obj[headers[idx]] = $(el).text().trim();
+                                    });
+                                return obj;
+                            })
+                            .get()
+                    );
+
+                    if (i === 0) {
+                        const paginationElems = $("div.pagination").first().children("a");
+                        // 2 ... 31 Next
+                        // We want to get the value of "31"
+                        max = Number($(paginationElems[paginationElems.length - 2]).text());
+                    }
+                } else {
+                    return {
+                        ok: false,
+                        err: "Invalid response from IATA website! Returned partial results!",
+                        result: data,
+                    };
+                }
+            }
+
+            return {
+                ok: true,
+                result: data,
+            };
         } else {
             return {
                 ok: false,
