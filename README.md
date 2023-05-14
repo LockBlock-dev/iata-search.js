@@ -4,7 +4,7 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/LockBlock-dev/iata-search.js.svg)](https://github.com/LockBlock-dev/iata-search.js/stargazers) ![npm](https://img.shields.io/npm/dm/iata-search.js)
 
-iata-search.js is a Node.js module that allows you to headlessly search airline and airport codes from https://www.iata.org/en/publications/directories/code-search/
+iata-search.js is a Node.js module that allows you to headlessly search airline codes from https://www.iata.org/en/about/members/airline-list/ and airport codes from https://www.iata.org/en/publications/directories/code-search/
 
 ## Installation
 

@@ -7,30 +7,53 @@ class Client {
      * @example const client = new Client();
      */
     constructor() {
-        /**
-         * The base URL for IATA website
-         * @type {String}
-         */
-        this.BASE_URL = "https://www.iata.org";
+        let _filters;
+
+        (function (e) {
+            e.AFRICA_AND_MIDDLE_EAST = "Africa & Middle East";
+            e.ASIA_PACIFIC = "Asia Pacific";
+            e.CHINA_AND_NORTH_ASIA = "China & North Asia";
+            e.EUROPE = "Europe";
+            e.THE_AMERICAS = "The Americas";
+        })(_filters || (_filters = {}));
 
         /**
-         * The URL for the search portal
-         * @type {String}
+         * The filters for the airline codes search
+         *
+         * Available filters are:
+         * - AFRICA_AND_MIDDLE_EAST
+         * - ASIA_PACIFIC
+         * - CHINA_AND_NORTH_ASIA
+         * - EUROPE
+         * - THE_AMERICAS
+         * @type {Object}
          */
-        this.SEARCH_PORTAL_URL = `${this.BASE_URL}/en/publications/directories/code-search`;
-
-        /**
-         * The base URL for airline codes search
-         * @type {String}
-         */
-        this.AIRLINE_CODES_URL = `${this.BASE_URL}/AirlineCodeSearchBlock/Search`;
-
-        /**
-         * The base URL for airport codes search
-         * @type {String}
-         */
-        this.AIRPORT_CODES_URL = `${this.BASE_URL}/AirportCodesSearch/Search`;
+        this.FILTERS = _filters;
     }
+
+    /**
+     * The base URL for IATA website
+     * @type {String}
+     */
+    BASE_URL = "https://www.iata.org";
+
+    /**
+     * The URL for the search portal
+     * @type {String}
+     */
+    SEARCH_PORTAL_URL = `${this.BASE_URL}/en/publications/directories/code-search`;
+
+    /**
+     * The base URL for airline codes search
+     * @type {String}
+     */
+    AIRLINE_CODES_URL = `${this.BASE_URL}/en/about/members/airline-list`;
+
+    /**
+     * The base URL for airport codes search
+     * @type {String}
+     */
+    AIRPORT_CODES_URL = `${this.BASE_URL}/AirportCodesSearch/Search`;
 
     #headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/109.0",
@@ -66,15 +89,16 @@ class Client {
      * Get additional data required for the search
      * @private
      * @param {string} form which form to parse, either airline or airport
+     * @param {string} url which page to get the data from
      *
      * @returns {Promise<URLSearchParams>} promise
      */
-    async #getAdditionalData(form) {
+    async #getAdditionalData(form, url) {
         form = form[0].toUpperCase() + form.slice(1); // IATA form has 'Airport' and 'Airline'
 
         const res = await this.#request({
             method: "GET",
-            url: this.SEARCH_PORTAL_URL,
+            url: url,
             raw: true,
         });
 
@@ -110,7 +134,7 @@ class Client {
             "airport.search": search,
         });
 
-        const additional = await this.#getAdditionalData("airport");
+        const additional = await this.#getAdditionalData("airport", this.SEARCH_PORTAL_URL);
 
         if (additional.ok) {
             for (const [key, val] of additional.data.entries()) {
@@ -172,17 +196,24 @@ class Client {
 
     /**
      * Airline codes search.
-     * @param {string} search query for the search
+     * @param {string} [search = ""] query for the search
+     * @param {Array} [regionFilters = []] filters for the search
      * @example client.airline("KL")
+     * @example client.airline("KLM", [client.FILTERS.EUROPE])
+     * @example client.airline("074")
+     * @example client.airline("", [client.FILTERS.EUROPE, client.FILTERS.THE_AMERICAS])
      * @return {Promise<Object>}
      */
-    async airline(search) {
+    async airline(search = "", regionFilters = []) {
         const url = new URL(this.AIRLINE_CODES_URL);
         const params = new URLSearchParams({
-            "airline.search": search,
+            search: search,
+            ordering: "Relevance",
         });
 
-        const additional = await this.#getAdditionalData("airline");
+        regionFilters.forEach((r) => params.append("region", r));
+
+        const additional = await this.#getAdditionalData("airline", this.AIRLINE_CODES_URL);
 
         if (additional.ok) {
             for (const [key, val] of additional.data.entries()) {
@@ -208,7 +239,7 @@ class Client {
                 //     .get();
 
                 /* Custom headers */
-                const headers = ["airline", "country", "iataCode"];
+                const headers = ["airline", "iataCode", "airlineCode", "icaoCode", "country"];
 
                 const data = $("table.datatable tbody")
                     .children("tr")
